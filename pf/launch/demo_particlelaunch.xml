@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="map_name" default="map" />
+
+    <!--<arg name="map_path" default="/home/ubuntu/thundershot/maps/map.yaml" /> -->
+
+    <node pkg="particle_filter" exec="pf_node" name="particle_filter" output="screen">
+        <!-- sub topics -->
+        <remap from="/map" to="/map"/>
+        <remap from="/initialpose" to="/initialpose"/>
+        <remap from="/odom" to="/odom"/>
+        <remap from="/scan" to="/scan"/>
+
+        <!-- pub topics -->
+        <remap from="/thundershot/pf/position" to="/pf/pose/odom"/>
+        <remap from="/thundershot/pf/particles" to="/pf/particles"/>
+
+        <!-- configurations -->
+        <param name="conf_path" value="$(find-pkg-share particle_filter)/conf/particle.yaml"/>
+        <param name="numRaysDs" value="60"/>
+        <param name="ekf_conf_path" value="$(find-pkg-share particle_filter)/conf/ekf.yaml"/>
+    </node>
+
+</launch>
