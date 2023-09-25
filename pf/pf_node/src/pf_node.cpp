@@ -189,6 +189,8 @@ void ParticleFilterNode::lidarCb(const sensor_msgs::msg::LaserScan::SharedPtr ms
     // std::cout << "loop time: " <<
     // std::chrono::duration_cast<std::chrono::microseconds>(end-start).count() << "us" <<
     // std::endl;
+    int end_ = rclcpp::Clock{}.now().seconds();
+    std::cout << end_ << std::endl;
 }
 
 /**
