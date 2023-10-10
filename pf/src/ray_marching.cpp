@@ -2,6 +2,7 @@
 #include "xrm.hpp"
 #include <cstring>
 #include <ctime>
+#include <omp.h>
 
 /**
  * Initializes all the parameters that are necessary for ray_marching class
@@ -51,7 +52,7 @@ void RayMarching::init(bool FPGA, bool GPU)
         first = true;
     }
 }
-
+double total, total1;
 void RayMarching::calculateRays(Particle_t* particles,
                                 float* distMap,
                                 Map_t *map,
@@ -59,9 +60,24 @@ void RayMarching::calculateRays(Particle_t* particles,
                                 int n_particles,
                                 float* rays_angle)
 {
+    //static std::chrono::steady_clock::time_point start, end;
+    std::clock_t start, end;
+    double start1, end1;
     double angle, rayPoseX, rayPoseY, distance;
-    for (int i = 0; i < n_particles; i++) {
-        for (int j = 0; j < N_RAYS_DS; ++j) {
+    int i,j;
+    //start = std::chrono::steady_clock::now();
+    start1 = omp_get_wtime();
+    start = std::clock();
+    
+#pragma omp parallel private(i, j, angle, rayPoseX, rayPoseY, distance) num_threads(4)
+	
+	
+{
+    
+    #pragma omp for schedule(static, 4)
+    for (i = 0; i < n_particles; i++) {
+    
+        for (j = 0; j < N_RAYS_DS; ++j) {
             float angle = (particles[i].yaw + cloud->angleMin) + rays_angle[j];
             rayPoseX = particles[i].x;
             rayPoseY = particles[i].y;
@@ -93,6 +109,23 @@ void RayMarching::calculateRays(Particle_t* particles,
             particles[i].rays[j] = out;
         }
     }
+    
+}
+    end = std::clock();
+    end1 = omp_get_wtime();
+    double elapsed_time = double(end - start)/CLOCKS_PER_SEC;
+    double elapsed_time1 = end1 - start1;
+    
+    //end = std::chrono::steady_clock::now();
+    //float l = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+    total = total + 1;
+    //std::cout << "time: " << total << "us" << std::endl;
+    
+    //total = total + elapsed_time;
+    //total1 = total1 + elapsed_time1;
+    std::cout << "Ciao: " << total << std::endl;
+    //std::cout << "Time with clock(): " << total << std::endl;
+    //std::cout << "Time with omp_get_wtime(): " << total1 << std::endl;
 }
 
 void RayMarching::calculateRaysFPGA(Particle_t* particles,
@@ -222,5 +255,38 @@ void RayMarching::calculateWeights(Particle_t* particles,
         }
 
         particles[i].weight = weight_temp;
+        //std::cout << weight_temp << std::endl;
     }
+    
+    int i=0;
+    
+/*
+{
+    for (int i; i < n_particles; i++) {
+        double weight_temp = 1.0f;
+        int j;
+        #pragma omp parallel for private(j) reduction(*:weight_temp) num_threads(3)
+        for (j=0 ; j < N_RAYS_DS; j++) { // TODO: substitute N_RAYS_DS with real number of rays
+
+            float realRayPX = obs[j] / map->map_resolution;
+            realRayPX = std::min<float>(std::max<float>(realRayPX, 0.0), (map->MAX_RANGE_PX - 1.0));
+
+            float virtualRayPX = particles[i].rays[j] / map->map_resolution;
+
+            virtualRayPX =
+              std::min<float>(std::max<float>(virtualRayPX, 0.0), (map->MAX_RANGE_PX - 1.0));
+	    //#pragma omp critical  <--- avoid with shared(weight_temp)
+            weight_temp *=
+              (double)sensor_model_table[int(virtualRayPX) * table_width + int(realRayPX)];
+            // weight_temp *=
+            // (double)sensor_model_table[int(realRayPX)*table_width+int(virtualRayPX)];
+        }
+        std::cout << particles[i].weight << std::endl;
+        
+	std::cout << weight_temp << std::endl;
+	std::cout << "_________________" << std::endl;
+        //particles[i].weight = weight_temp;
+        
+    }
+ }*/
 }

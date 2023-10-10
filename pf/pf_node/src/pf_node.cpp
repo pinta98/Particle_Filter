@@ -133,6 +133,9 @@ void ParticleFilterNode::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 /**
     lidar callback relative to lidar_sub subsciber in main
 */
+float downsample_time, loop_time;
+int downsample_counter, loop_counter; 
+
 void ParticleFilterNode::lidarCb(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
     if (!map_initialized || !take_pose)
@@ -175,22 +178,37 @@ void ParticleFilterNode::lidarCb(const sensor_msgs::msg::LaserScan::SharedPtr ms
         scan[j++] = 0.0f;
     }
     end = std::chrono::steady_clock::now();
-    // std::cout << "downsample time: " <<
-    // std::chrono::duration_cast<std::chrono::microseconds>(end-start).count() << "us" <<
-    // std::endl;
+    //float l = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+    //std::cout << "downsample time: " << l << "us" << std::endl;
+    //downsample_time = downsample_time + l;
+    //downsample_counter++;
+    
+    //float downsample_mean = downsample_time/downsample_counter;
+    //std::cout << "downsample mean: " << downsample_mean << "us" << std::endl;
 
     // lidar_initialized = true;
     update(msg->header.stamp);
 
-    end = std::chrono::steady_clock::now();
+    //end = std::chrono::steady_clock::now();
 
     downsampled_msg.ranges = ranges;
     lidar_pub->publish(downsampled_msg);
-    // std::cout << "loop time: " <<
-    // std::chrono::duration_cast<std::chrono::microseconds>(end-start).count() << "us" <<
-    // std::endl;
-    int end_ = rclcpp::Clock{}.now().seconds();
-    std::cout << end_ << std::endl;
+    //float ds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+    //std::cout << "loop time: " << ds << "us" << std::endl;
+    //loop_time = loop_time + ds;
+    //loop_counter++;
+    
+    //float loop_mean = loop_time/loop_counter;
+    //std::cout << "loop mean: " << loop_mean << "us" << std::endl;
+    
+    //int end_ = rclcpp::Clock{}.now().seconds();
+    //std::cout << end_ << std::endl;
+    
+    std::cout << "______________________" << std::endl;   
+    
+    
+    
+    
 }
 
 /**
