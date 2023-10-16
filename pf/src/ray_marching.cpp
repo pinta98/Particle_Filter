@@ -52,7 +52,8 @@ void RayMarching::init(bool FPGA, bool GPU)
         first = true;
     }
 }
-double total, total1;
+double total, mean, prova, prova2, tot;
+int counter;
 void RayMarching::calculateRays(Particle_t* particles,
                                 float* distMap,
                                 Map_t *map,
@@ -60,21 +61,16 @@ void RayMarching::calculateRays(Particle_t* particles,
                                 int n_particles,
                                 float* rays_angle)
 {
-    //static std::chrono::steady_clock::time_point start, end;
     std::clock_t start, end;
-    double start1, end1;
     double angle, rayPoseX, rayPoseY, distance;
     int i,j;
-    //start = std::chrono::steady_clock::now();
-    start1 = omp_get_wtime();
     start = std::clock();
+    prova = omp_get_wtime();
     
-#pragma omp parallel private(i, j, angle, rayPoseX, rayPoseY, distance) num_threads(4)
-	
+#pragma omp parallel private(i, j, angle, rayPoseX, rayPoseY, distance) num_threads(2)
 	
 {
-    
-    #pragma omp for schedule(static, 4)
+    #pragma omp for schedule(dynamic, 16)
     for (i = 0; i < n_particles; i++) {
     
         for (j = 0; j < N_RAYS_DS; ++j) {
@@ -112,20 +108,17 @@ void RayMarching::calculateRays(Particle_t* particles,
     
 }
     end = std::clock();
-    end1 = omp_get_wtime();
-    double elapsed_time = double(end - start)/CLOCKS_PER_SEC;
-    double elapsed_time1 = end1 - start1;
+    prova2 = omp_get_wtime();
+    tot = tot + prova2 - prova;
+    double elapsed_time = double(end - start)/CLOCKS_PER_SEC;    
+    total = total + elapsed_time;
+    counter = counter+1;
+    mean = total/counter;
     
-    //end = std::chrono::steady_clock::now();
-    //float l = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-    total = total + 1;
-    //std::cout << "time: " << total << "us" << std::endl;
-    
-    //total = total + elapsed_time;
-    //total1 = total1 + elapsed_time1;
-    std::cout << "Ciao: " << total << std::endl;
-    //std::cout << "Time with clock(): " << total << std::endl;
-    //std::cout << "Time with omp_get_wtime(): " << total1 << std::endl;
+    std::cout << "Time with clock(): " << total << std::endl;
+    std::cout << "CalculateRay() calls: " << tot << std::endl;
+    std::cout << "Calls time mean: " << mean << std::endl;
+    std::cout << "______________________" << std::endl; 
 }
 
 void RayMarching::calculateRaysFPGA(Particle_t* particles,
